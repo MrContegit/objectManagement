@@ -1,0 +1,50 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: ./object-management-backend
+      dockerfile: Dockerfile
+    container_name: object-management-backend
+    ports:
+      - '3001:3000'
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongodb:27017/object-management
+      - CORS_ORIGIN=http://localhost:4000
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Le navigateur ne connaît pas "backend" → on compile avec localhost
+        - NEXT_PUBLIC_API_URL=http://localhost:3001
+        - NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
+    container_name: object-management-frontend
+    ports:
+      - '4000:3000'
+    environment:
+      # Utilisé par le serveur Next.js (rewrites proxy) pour atteindre le backend
+      - INTERNAL_API_URL=http://backend:3000
+    depends_on:
+      - backend
+
+  mongodb:
+    image: mongo:7
+    container_name: object-management-mongodb
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand({ping: 1})']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb_data:
