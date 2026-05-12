@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
+import { getApiUrl } from '@/lib/utils';
 
 import { socket } from '@/lib/socket';
 
