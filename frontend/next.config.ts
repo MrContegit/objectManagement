@@ -4,15 +4,15 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   // Proxy : le serveur Next.js redirige /api/backend/* → backend:3000/*
   async rewrites() {
-    const internalUrl = process.env.INTERNAL_API_URL ?? 'http://backend:3000';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     return [
       {
         source: '/api/backend/:path*',
-        destination: `${internalUrl}/:path*`,
+        destination: `${backendUrl}/:path*`,
       },
       {
         source: '/uploads/:path*',
-        destination: `${internalUrl}/uploads/:path*`,
+        destination: `${backendUrl}/uploads/:path*`,
       },
     ];
   },
@@ -28,6 +28,11 @@ const nextConfig: NextConfig = {
         protocol: 'http',
         hostname: 'backend',
         port: '3000',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.onrender.com',
         pathname: '/**',
       },
     ],
