@@ -97,7 +97,7 @@ export default function ObjectDetailPage() {
               onClick={handleDelete}
               className="bg-[var(--destructive)] hover:opacity-90 text-black"
             >
-              <Trash2 className="w-4 h-4 mr-2 bg-black" />
+              <Trash2 className="w-4 h-4 mr-2 text-black" />
               Delete
             </Button>
           </CardHeader>
