@@ -33,11 +33,38 @@ export class AppService {
   }
 
   async create(dto: CreateObjectDto, file: Express.Multer.File) {
+    console.log('=== APP SERVICE: CREATE ===');
+    console.log('dto:', dto);
+    console.log('file:', file);
+
+    if (!file) {
+      console.error('NO FILE PROVIDED!');
+      throw new Error('File is required');
+    }
+
+    if (!dto.title || !dto.description) {
+      console.error('MISSING FIELDS!', { title: dto.title, description: dto.description });
+      throw new Error('Title and description are required');
+    }
+
     this.logger.log(`Creating object with title: ${dto.title}`);
-    const imageUrl = await this.s3Service.uploadFile(file);
-    const newObj = await this.model.create({ ...dto, imageUrl });
-    this.eventsGateway.server.emit('objectCreated', newObj);
-    return newObj;
+
+    try {
+      console.log('Uploading file to S3...');
+      const imageUrl = await this.s3Service.uploadFile(file);
+      console.log('File uploaded, URL:', imageUrl);
+
+      console.log('Creating object in MongoDB...');
+      const newObj = await this.model.create({ ...dto, imageUrl });
+      console.log('Object created in DB:', newObj);
+
+      this.eventsGateway.server.emit('objectCreated', newObj);
+      return newObj;
+    } catch (error) {
+      console.error('ERROR IN CREATE:', error.message);
+      console.error('Stack:', error.stack);
+      throw error;
+    }
   }
 
   async findOne(id: string) {

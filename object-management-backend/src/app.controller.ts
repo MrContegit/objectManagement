@@ -17,6 +17,9 @@ export class AppController {
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   async create(@Body() dto: CreateObjectDto, @UploadedFile() file: Express.Multer.File) {
+    console.log('=== POST /objects ===');
+    console.log('DTO received:', dto);
+    console.log('File received:', file ? { originalname: file.originalname, mimetype: file.mimetype, size: file.size } : 'NO FILE');
     return this.appService.create(dto, file);
   }
 

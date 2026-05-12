@@ -86,16 +86,27 @@ export class S3Service implements OnModuleInit {
   }
 
   async uploadFile(file: Express.Multer.File): Promise<string> {
+    console.log('=== S3 SERVICE: UPLOAD ===');
+    console.log('File details:', { originalname: file.originalname, mimetype: file.mimetype, size: file.size });
+    console.log('S3 config:', { endpoint: process.env.S3_ENDPOINT, bucket: this.bucket, isCloudflare: this.isCloudflare });
+
     const filename = `${Date.now()}-${file.originalname.replace(/\s/g, '_')}`;
 
-    await this.s3Client.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: filename,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-      }),
-    );
+    try {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: filename,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+        }),
+      );
+      console.log('S3 upload successful');
+    } catch (s3Error) {
+      console.error('S3 UPLOAD ERROR:', s3Error.message);
+      console.error('S3 Error details:', s3Error);
+      throw s3Error;
+    }
 
     const publicUrl = process.env.PUBLIC_S3_URL || 'http://localhost:9000';
     const cleanPublicUrl = publicUrl.replace(/\/$/, '');
