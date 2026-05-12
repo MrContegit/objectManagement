@@ -44,7 +44,7 @@ export default function CreateObjectForm({ onSuccess }: CreateObjectFormProps) {
 
   const createObjectMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await fetch(`${getApiUrl()}`, {
+      const response = await fetch(`${getApiUrl()}/`, {
         method: "POST",
         body: formData,
       });

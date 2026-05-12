@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft, Trash2 } from 'lucide-react';
+import { getApiUrl } from '@/lib/utils';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ export default function ObjectDetailPage() {
   const { data: object, isLoading, isError } = useQuery<ObjectItem>({
     queryKey: ['object', id],
     queryFn: async () => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/objects/${id}`);
+      const response = await fetch(`${getApiUrl()}/objects/${id}`);
       if (!response.ok) throw new Error('Failed to fetch object');
       return response.json();
     },
@@ -32,7 +33,7 @@ export default function ObjectDetailPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/objects/${id}`, {
+      const response = await fetch(`${getApiUrl()}/objects/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete');
