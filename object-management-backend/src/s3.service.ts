@@ -6,27 +6,26 @@ export class S3Service implements OnModuleInit {
   private s3Client: S3Client;
   private readonly logger = new Logger(S3Service.name);
   private readonly bucket = process.env.S3_BUCKET || 'objects';
+  private isCloudflare = false;
 
   constructor() {
     const endpoint = process.env.S3_ENDPOINT || 'http://localhost:9000';
-    const isCloudflare = endpoint.includes('cloudflarestorage.com');
+    this.isCloudflare = endpoint.includes('cloudflarestorage.com');
 
     this.s3Client = new S3Client({
       endpoint: endpoint,
-      region: process.env.S3_REGION || 'us-east-1',
+      region: process.env.S3_REGION || 'auto',
       credentials: {
         accessKeyId: process.env.S3_ACCESS_KEY || 'minioadmin',
         secretAccessKey: process.env.S3_SECRET_KEY || 'minioadmin',
       },
-      // Cloudflare R2 works better with virtual-host style (forcePathStyle: false)
-      // MinIO requires path-style (forcePathStyle: true)
-      forcePathStyle: !isCloudflare, 
+      forcePathStyle: !this.isCloudflare, 
     });
   }
 
   async onModuleInit() {
     await this.ensureBucketExists();
-    // Only set public policy on MinIO. Cloudflare R2 handles policy via dashboard.
+    
     const endpoint = process.env.S3_ENDPOINT || '';
     if (endpoint.includes('localhost') || endpoint.includes('minio')) {
       await this.setPublicPolicy();
@@ -36,14 +35,14 @@ export class S3Service implements OnModuleInit {
   private async ensureBucketExists() {
     try {
       await this.s3Client.send(new HeadBucketCommand({ Bucket: this.bucket }));
-      this.logger.log(`Bucket "${this.bucket}" already exists.`);
+      this.logger.log(`Bucket "${this.bucket}" ready.`);
     } catch (error) {
-      this.logger.log(`Bucket "${this.bucket}" does not exist. Creating...`);
+      this.logger.warn(`Bucket check failed: ${error.message}. Attempting to create...`);
       try {
         await this.s3Client.send(new CreateBucketCommand({ Bucket: this.bucket }));
         this.logger.log(`Bucket "${this.bucket}" created successfully.`);
       } catch (createError) {
-        this.logger.error(`Error creating bucket: ${createError.message}`);
+        this.logger.error(`Could not create bucket (normal on Cloudflare if already exists): ${createError.message}`);
       }
     }
   }
@@ -85,17 +84,20 @@ export class S3Service implements OnModuleInit {
     );
 
     const publicUrl = process.env.PUBLIC_S3_URL || 'http://localhost:9000';
-    // Remove trailing slash from publicUrl if present
     const cleanPublicUrl = publicUrl.replace(/\/$/, '');
-    return `${cleanPublicUrl}/${this.bucket}/${filename}`;
+
+    // Cloudflare R2 Public URLs don't need the bucket name in the path
+    // MinIO local URLs DO need the bucket name
+    if (this.isCloudflare) {
+      return `${cleanPublicUrl}/${filename}`;
+    } else {
+      return `${cleanPublicUrl}/${this.bucket}/${filename}`;
+    }
   }
 
   async deleteFile(fileUrl: string): Promise<void> {
     try {
-      if (!fileUrl.startsWith('http')) {
-        this.logger.warn(`Skipping S3 deletion for non-S3 URL: ${fileUrl}`);
-        return;
-      }
+      if (!fileUrl.startsWith('http')) return;
 
       const url = new URL(fileUrl);
       const pathParts = url.pathname.split('/');
@@ -107,9 +109,9 @@ export class S3Service implements OnModuleInit {
           Key: key,
         }),
       );
-      this.logger.log(`File ${key} deleted from S3.`);
+      this.logger.log(`File ${key} deleted.`);
     } catch (error) {
-      this.logger.error(`Error deleting file from S3: ${error.message}`);
+      this.logger.error(`Delete error: ${error.message}`);
     }
   }
 }
