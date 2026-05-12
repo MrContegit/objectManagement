@@ -20,12 +20,14 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1045.0",
+    "@aws-sdk/lib-storage": "^3.1045.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/mongoose": "^11.0.4",
     "@nestjs/platform-express": "^11.0.1",
-    "@nestjs/serve-static": "^5.0.5",
     "@nestjs/platform-socket.io": "^11.0.1",
+    "@nestjs/serve-static": "^5.0.5",
     "@nestjs/websockets": "^11.1.19",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",

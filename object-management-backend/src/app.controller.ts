@@ -3,7 +3,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AppService } from './app.service';
 import {CreateObjectDto} from "./create-object.dto";
 
-@Controller()
+@Controller('objects')
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
@@ -20,12 +20,12 @@ export class AppController {
     return this.appService.create(dto, file);
   }
 
-  @Get('objects/:id')
+  @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.appService.findOne(id);
   }
 
-  @Delete('objects/:id')
+  @Delete(':id')
   async delete(@Param('id') id: string) {
     return this.appService.delete(id);
   }

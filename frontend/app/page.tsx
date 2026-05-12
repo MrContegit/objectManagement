@@ -60,7 +60,7 @@ export default function ObjectsPage() {
     queryKey: ['objects', page],
     queryFn: async () => {
       const apiUrl = getApiUrl();
-      const response = await fetch(`${apiUrl}/?page=${page}&limit=${limit}`);
+      const response = await fetch(`${apiUrl}/objects?page=${page}&limit=${limit}`);
       if (!response.ok) {
         throw new Error('Failed to fetch objects');
       }

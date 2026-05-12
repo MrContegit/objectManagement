@@ -32,6 +32,12 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '9000',
+        pathname: '/**',
+      },
+      {
         protocol: 'https',
         hostname: '**.onrender.com',
         pathname: '/**',
