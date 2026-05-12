@@ -57,7 +57,7 @@ export default function CreateObjectForm({ onSuccess }: CreateObjectFormProps) {
     },
 
     onSuccess: () => {
-      console.log('Front-end: Objet créé avec succès');
+      console.log('Front-end: Object created successfully');
       setTitle("");
       setDescription("");
       setFile(null);

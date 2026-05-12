@@ -81,7 +81,7 @@ export default function ObjectsPage() {
       return response.json();
     },
     onSuccess: () => {
-      console.log('Front-end: Objet supprimé avec succès');
+      console.log('Front-end: Object deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['objects'] });
     },
   });
