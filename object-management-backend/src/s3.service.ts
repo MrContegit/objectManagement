@@ -21,6 +21,7 @@ export class S3Service implements OnModuleInit {
 
   async onModuleInit() {
     await this.ensureBucketExists();
+    await this.setPublicPolicy();
   }
 
   private async ensureBucketExists() {
@@ -32,28 +33,33 @@ export class S3Service implements OnModuleInit {
       try {
         await this.s3Client.send(new CreateBucketCommand({ Bucket: this.bucket }));
         this.logger.log(`Bucket "${this.bucket}" created successfully.`);
-        
-        // Set public policy
-        const policy = {
-          Version: '2012-10-17',
-          Statement: [
-            {
-              Sid: 'PublicRead',
-              Effect: 'Allow',
-              Principal: '*',
-              Action: ['s3:GetObject'],
-              Resource: [`arn:aws:s3:::${this.bucket}/*`],
-            },
-          ],
-        };
-        await this.s3Client.send(new PutBucketPolicyCommand({
-          Bucket: this.bucket,
-          Policy: JSON.stringify(policy),
-        }));
-        this.logger.log(`Public policy set for bucket "${this.bucket}".`);
       } catch (createError) {
         this.logger.error(`Error creating bucket: ${createError.message}`);
       }
+    }
+  }
+
+  private async setPublicPolicy() {
+    try {
+      const policy = {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Sid: 'PublicRead',
+            Effect: 'Allow',
+            Principal: '*',
+            Action: ['s3:GetObject'],
+            Resource: [`arn:aws:s3:::${this.bucket}/*`],
+          },
+        ],
+      };
+      await this.s3Client.send(new PutBucketPolicyCommand({
+        Bucket: this.bucket,
+        Policy: JSON.stringify(policy),
+      }));
+      this.logger.log(`Public policy ensured for bucket "${this.bucket}".`);
+    } catch (error) {
+      this.logger.error(`Error setting bucket policy: ${error.message}`);
     }
   }
 
@@ -75,6 +81,11 @@ export class S3Service implements OnModuleInit {
 
   async deleteFile(fileUrl: string): Promise<void> {
     try {
+      if (!fileUrl.startsWith('http')) {
+        this.logger.warn(`Skipping S3 deletion for non-S3 URL: ${fileUrl}`);
+        return;
+      }
+
       const url = new URL(fileUrl);
       const pathParts = url.pathname.split('/');
       const key = pathParts[pathParts.length - 1];

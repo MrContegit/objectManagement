@@ -85,6 +85,7 @@ export default function ObjectDetailPage() {
               src={object.imageUrl}
               alt={object.title}
               fill
+              unoptimized={true}
               className="object-cover"
             />
           </div>
