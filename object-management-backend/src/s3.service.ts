@@ -8,20 +8,29 @@ export class S3Service implements OnModuleInit {
   private readonly bucket = process.env.S3_BUCKET || 'objects';
 
   constructor() {
+    const endpoint = process.env.S3_ENDPOINT || 'http://localhost:9000';
+    const isCloudflare = endpoint.includes('cloudflarestorage.com');
+
     this.s3Client = new S3Client({
-      endpoint: process.env.S3_ENDPOINT || 'http://localhost:9000',
+      endpoint: endpoint,
       region: process.env.S3_REGION || 'us-east-1',
       credentials: {
         accessKeyId: process.env.S3_ACCESS_KEY || 'minioadmin',
         secretAccessKey: process.env.S3_SECRET_KEY || 'minioadmin',
       },
-      forcePathStyle: true, 
+      // Cloudflare R2 works better with virtual-host style (forcePathStyle: false)
+      // MinIO requires path-style (forcePathStyle: true)
+      forcePathStyle: !isCloudflare, 
     });
   }
 
   async onModuleInit() {
     await this.ensureBucketExists();
-    await this.setPublicPolicy();
+    // Only set public policy on MinIO. Cloudflare R2 handles policy via dashboard.
+    const endpoint = process.env.S3_ENDPOINT || '';
+    if (endpoint.includes('localhost') || endpoint.includes('minio')) {
+      await this.setPublicPolicy();
+    }
   }
 
   private async ensureBucketExists() {
@@ -76,7 +85,9 @@ export class S3Service implements OnModuleInit {
     );
 
     const publicUrl = process.env.PUBLIC_S3_URL || 'http://localhost:9000';
-    return `${publicUrl}/${this.bucket}/${filename}`;
+    // Remove trailing slash from publicUrl if present
+    const cleanPublicUrl = publicUrl.replace(/\/$/, '');
+    return `${cleanPublicUrl}/${this.bucket}/${filename}`;
   }
 
   async deleteFile(fileUrl: string): Promise<void> {
