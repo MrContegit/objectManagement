@@ -6,15 +6,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getApiUrl() {
-  if (typeof window === 'undefined') {
-    return process.env.INTERNAL_API_URL || 'http://backend:3000';
-  }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const url = typeof window === 'undefined' 
+    ? (process.env.INTERNAL_API_URL || 'http://backend:3000')
+    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000');
+  return url.replace(/\/$/, '');
 }
 
 export function getSocketUrl() {
-  if (typeof window === 'undefined') {
-    return process.env.INTERNAL_API_URL || 'http://backend:3000';
-  }
-  return process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
+  const url = typeof window === 'undefined'
+    ? (process.env.INTERNAL_API_URL || 'http://backend:3000')
+    : (process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000');
+  return url.replace(/\/$/, '');
 }
+

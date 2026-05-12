@@ -4,7 +4,8 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   // Proxy : le serveur Next.js redirige /api/backend/* → backend:3000/*
   async rewrites() {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const rawBackendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const backendUrl = rawBackendUrl.replace(/\/$/, '');
     return [
       {
         source: '/api/backend/:path*',

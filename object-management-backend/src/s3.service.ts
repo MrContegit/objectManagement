@@ -9,14 +9,17 @@ export class S3Service {
     if (!existsSync(uploadsDir)) {
       mkdirSync(uploadsDir, { recursive: true });
     }
-    const filename = `${Date.now()}-${file.originalname}`;
+    const originalName = file.originalname;
+    const sanitizedName = originalName.replace(/[^a-zA-Z0-9.\-]/g, '_');
+    const filename = `${Date.now()}-${sanitizedName}`;
     const filepath = join(uploadsDir, filename);
     writeFileSync(filepath, file.buffer);
     return `/uploads/${filename}`;
   }
 
   async deleteFile(filePath: string): Promise<void> {
-    const fullPath = join(process.cwd(), filePath);
+    const relativePath = filePath.startsWith('/') ? filePath.slice(1) : filePath;
+    const fullPath = join(process.cwd(), relativePath);
     if (existsSync(fullPath)) {
       unlinkSync(fullPath);
     }

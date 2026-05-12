@@ -58,7 +58,7 @@ export default function ObjectsPage() {
   } = useQuery<PaginatedResponse>({
     queryKey: ['objects', page],
     queryFn: async () => {
-      const apiUrl = typeof window === 'undefined' ? 'http://backend:3000' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000');
+      const apiUrl = getApiUrl();
       const response = await fetch(`${apiUrl}?page=${page}&limit=${limit}`);
       if (!response.ok) {
         throw new Error('Failed to fetch objects');
@@ -72,7 +72,7 @@ export default function ObjectsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const apiUrl = typeof window === 'undefined' ? 'http://backend:3000' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000');
+      const apiUrl = getApiUrl();
       const response = await fetch(`${apiUrl}/objects/${id}`, {
         method: 'DELETE',
       });
