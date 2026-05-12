@@ -19,13 +19,13 @@ export class S3Service implements OnModuleInit {
         accessKeyId: process.env.S3_ACCESS_KEY || 'minioadmin',
         secretAccessKey: process.env.S3_SECRET_KEY || 'minioadmin',
       },
-      forcePathStyle: !this.isCloudflare, 
+      forcePathStyle: !this.isCloudflare,
     });
   }
 
   async onModuleInit() {
     await this.ensureBucketExists();
-    
+
     const endpoint = process.env.S3_ENDPOINT || '';
     if (endpoint.includes('localhost') || endpoint.includes('minio')) {
       await this.setPublicPolicy();
@@ -33,16 +33,30 @@ export class S3Service implements OnModuleInit {
   }
 
   private async ensureBucketExists() {
+    if (this.isCloudflare) {
+      this.logger.log(`Cloudflare R2 detected — skipping bucket check for "${this.bucket}". Ensure it exists in your R2 dashboard.`);
+      return;
+    }
+
     try {
       await this.s3Client.send(new HeadBucketCommand({ Bucket: this.bucket }));
       this.logger.log(`Bucket "${this.bucket}" ready.`);
     } catch (error) {
-      this.logger.warn(`Bucket check failed: ${error.message}. Attempting to create...`);
-      try {
-        await this.s3Client.send(new CreateBucketCommand({ Bucket: this.bucket }));
-        this.logger.log(`Bucket "${this.bucket}" created successfully.`);
-      } catch (createError) {
-        this.logger.error(`Could not create bucket (normal on Cloudflare if already exists): ${createError.message}`);
+      const isNotFound =
+        error.name === 'NotFound' ||
+        error.$metadata?.httpStatusCode === 404 ||
+        error.name === 'NoSuchBucket';
+
+      if (isNotFound) {
+        this.logger.warn(`Bucket "${this.bucket}" not found. Attempting to create...`);
+        try {
+          await this.s3Client.send(new CreateBucketCommand({ Bucket: this.bucket }));
+          this.logger.log(`Bucket "${this.bucket}" created successfully.`);
+        } catch (createError) {
+          this.logger.error(`Could not create bucket: ${createError.message}`);
+        }
+      } else {
+        this.logger.error(`Bucket check failed with unexpected error: ${error.name} — ${error.message}`);
       }
     }
   }
@@ -73,7 +87,7 @@ export class S3Service implements OnModuleInit {
 
   async uploadFile(file: Express.Multer.File): Promise<string> {
     const filename = `${Date.now()}-${file.originalname.replace(/\s/g, '_')}`;
-    
+
     await this.s3Client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
