@@ -114,7 +114,7 @@ export class S3Service implements OnModuleInit {
     // Cloudflare R2 Public URLs don't need the bucket name in the path
     // MinIO local URLs DO need the bucket name
     if (this.isCloudflare) {
-      return `${cleanPublicUrl}/${filename}`;
+      return `${cleanPublicUrl}/${this.bucket}/${filename}`;
     } else {
       return `${cleanPublicUrl}/${this.bucket}/${filename}`;
     }
